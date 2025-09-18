@@ -93,7 +93,7 @@
 
         csv.Context.RegisterClassMap<UserMap>();
 
-        //var users = csv.GetRecords<User>().ToList(); Synkront funkade inte
+        //var users = csv.GetRecords<User>().ToList(); Synkront funkade inte - bugg visar inte tabell med detta
 
         var users = new List<User>();
         while (await csv.ReadAsync())
@@ -120,7 +120,7 @@
 
             if(!Validator.TryValidateObject(u, context, results, true))
             {
-                validation.Errors.AddRange(results.Select(r => r.ErrorMessage ?? "Unknown error"));
+                validation.Errors.AddRange(results.Select(r => r.ErrorMessage ?? "fel inmatning"));
             }
             Records.Add(validation);
         }
