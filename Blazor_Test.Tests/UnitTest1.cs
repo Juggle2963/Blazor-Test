@@ -43,5 +43,7 @@ namespace Blazor_Test.Tests
             Assert.True(IsOk); //validering ok
             Assert.DoesNotContain(result, r => r.ErrorMessage!.Contains("Email"));
         }
-    }
+
+       
+        }
 }
