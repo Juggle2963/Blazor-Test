@@ -1,5 +1,7 @@
 using Blazor_Test.Components;
 using Blazor_Test.Data;
+using Blazor_Test.Models;
+using Blazor_Test.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blazor_Test
@@ -14,7 +16,10 @@ namespace Blazor_Test
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-            builder.Services.AddDbContext<MyDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MyDbContext")));
+            builder.Services.AddDbContext<MyDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MyDbContext"))); //service connection till DI
+
+            builder.Services.AddScoped<User>();
+            builder.Services.AddScoped<UserServices>();
 
             var app = builder.Build();
 

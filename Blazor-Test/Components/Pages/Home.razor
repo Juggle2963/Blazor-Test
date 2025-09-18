@@ -1,7 +1,143 @@
-﻿@page "/"
+﻿@using Blazor_Test.Models
+@using Blazor_Test.Data
+@using Blazor_Test.Services
+@using CsvHelper
+@using System.Globalization
+@using System.ComponentModel.DataAnnotations
+@using CsvHelper.Configuration
+
+
+@page "/"
+@inject MyDbContext myDbContext
+@inject UserServices userServices
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<InputFile OnChange="HandleFileSelected"/>
 
-Welcome to your new app.
+
+    <p>Antal rader laddade: @Records.Count</p>
+
+    @if (Records.Any())
+{
+
+
+
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Password</th>
+            <th>Valid?</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var record in Records)
+        {
+            <tr>
+                    <td class="@(record.Errors.Any(e => e.Contains("Name")) ? "text-danger" : "")">
+                    @record.User.FullName
+                </td>
+                    <td class="@(record.Errors.Any(e => e.Contains("Username")) ? "text-danger" : "")">
+                    @record.User.UserName
+                </td>
+                <td class="@(record.Errors.Any(e => e.Contains("Email")) ? "text-danger" : "")">
+                    @record.User.Email
+                </td>
+                <td class="@(record.Errors.Any(e => e.Contains("Password")) ? "text-danger" : "")">
+                    @record.User.Password
+                </td>
+                <td>
+                    @(record.IsValid ? "✅" : "❌")
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+    <button class="btn btn-primary" @onclick="Spara">Spara giltiga data till databas</button>
+}
+
+@code {
+    private async Task Spara()
+    {
+        List<User> send = new();
+        foreach (var Item in Records)
+        {
+            if (Item.IsValid)
+                send.Add(Item.User);
+        }
+       await userServices.SaveUsersAsync(send);
+    }
+
+
+
+    private List <UserRecordValidation> Records = new();
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        using var stream = file.OpenReadStream();
+        using var reader = new StreamReader(stream);
+        //using var csv = new CsvReader(reader, CultureInfo.InvariantCulture); //
+
+        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) //konfigurera för att slippa headers
+        
+        {
+            HasHeaderRecord = false,
+            TrimOptions = TrimOptions.Trim,   
+            Delimiter = ","
+        });
+
+        csv.Context.RegisterClassMap<UserMap>();
+
+        //var users = csv.GetRecords<User>().ToList(); Synkront funkade inte
+
+        var users = new List<User>();
+        while (await csv.ReadAsync())
+        {
+            var u = csv.GetRecord<User>();
+            users.Add(u);
+        }
+
+        Console.WriteLine($"Läste in {users.Count} användare");
+        foreach (var u in users)
+        {
+            Console.WriteLine($"{u.FullName} | {u.UserName} | {u.Email} | {u.Password}");
+        }
+
+        
+
+        Records.Clear();
+
+        foreach(var u in users)
+        {
+            var validation = new UserRecordValidation { User = u };
+            var results = new List<ValidationResult>();
+            var context = new ValidationContext(u);
+
+            if(!Validator.TryValidateObject(u, context, results, true))
+            {
+                validation.Errors.AddRange(results.Select(r => r.ErrorMessage ?? "Unknown error"));
+            }
+            Records.Add(validation);
+        }
+        StateHasChanged();
+    }
+
+    public sealed class UserMap : ClassMap<User>
+    {
+        public UserMap()
+        {
+            Map(m => m.FullName).Index(0);
+            Map(m => m.UserName).Index(1);
+            Map(m => m.Email).Index(2);
+            Map(m => m.Password).Index(3);
+        }
+    }
+}
+
+
+
