@@ -20,6 +20,7 @@ namespace Blazor_Test
 
             builder.Services.AddScoped<User>();
             builder.Services.AddScoped<UserServices>();
+            builder.Services.AddScoped<CsvImportService>();
 
             var app = builder.Build();
 

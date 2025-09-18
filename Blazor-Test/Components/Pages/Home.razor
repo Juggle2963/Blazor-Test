@@ -10,13 +10,13 @@
 @page "/"
 @inject MyDbContext myDbContext
 @inject UserServices userServices
+@inject CsvImportService csvImportService
 
 <PageTitle>Home</PageTitle>
 
 <InputFile OnChange="HandleFileSelected"/>
 
 
-    <p>Antal rader laddade: @Records.Count</p>
 
     @if (Records.Any())
 {
@@ -56,10 +56,22 @@
         }
     </tbody>
 </table>
+<br />
     <button class="btn btn-primary" @onclick="Spara">Spara giltiga data till databas</button>
 }
 
 @code {
+
+
+
+    private List <UserRecordValidation> Records = new();
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        Records = await csvImportService.ImportAsync(e.File.OpenReadStream());
+
+    }
+
     private async Task Spara()
     {
         List<User> send = new();
@@ -68,75 +80,13 @@
             if (Item.IsValid)
                 send.Add(Item.User);
         }
-       await userServices.SaveUsersAsync(send);
+        await userServices.SaveUsersAsync(send);
+
+        Records.Clear(); //Dessa två tar bort tabell efter spara funktion körts
+
+        StateHasChanged(); 
     }
-
-
-
-    private List <UserRecordValidation> Records = new();
-
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-
-        using var stream = file.OpenReadStream();
-        using var reader = new StreamReader(stream);
-        //using var csv = new CsvReader(reader, CultureInfo.InvariantCulture); //
-
-        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) //konfigurera för att slippa headers
-        
-        {
-            HasHeaderRecord = false,
-            TrimOptions = TrimOptions.Trim,   
-            Delimiter = ","
-        });
-
-        csv.Context.RegisterClassMap<UserMap>();
-
-        //var users = csv.GetRecords<User>().ToList(); Synkront funkade inte - bugg visar inte tabell med detta
-
-        var users = new List<User>();
-        while (await csv.ReadAsync())
-        {
-            var u = csv.GetRecord<User>();
-            users.Add(u);
-        }
-
-        Console.WriteLine($"Läste in {users.Count} användare");
-        foreach (var u in users)
-        {
-            Console.WriteLine($"{u.FullName} | {u.UserName} | {u.Email} | {u.Password}");
-        }
-
-        
-
-        Records.Clear();
-
-        foreach(var u in users)
-        {
-            var validation = new UserRecordValidation { User = u };
-            var results = new List<ValidationResult>();
-            var context = new ValidationContext(u);
-
-            if(!Validator.TryValidateObject(u, context, results, true))
-            {
-                validation.Errors.AddRange(results.Select(r => r.ErrorMessage ?? "fel inmatning"));
-            }
-            Records.Add(validation);
-        }
-        StateHasChanged();
-    }
-
-    public sealed class UserMap : ClassMap<User>
-    {
-        public UserMap()
-        {
-            Map(m => m.FullName).Index(0);
-            Map(m => m.UserName).Index(1);
-            Map(m => m.Email).Index(2);
-            Map(m => m.Password).Index(3);
-        }
-    }
+    
 }
 
 

@@ -1,0 +1,49 @@
+﻿@page "/users"
+@using Blazor_Test.Services
+@inject UserServices userServices
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+
+
+
+
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Password</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in userServices.GetAllUsers())
+        {
+            <tr>
+                <td>
+                    @user.FullName
+                </td>
+                <td>
+                    @user.UserName
+                </td>     
+                <td>
+                    @user.Email
+                </td>
+                <td>
+                    @user.Password
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
