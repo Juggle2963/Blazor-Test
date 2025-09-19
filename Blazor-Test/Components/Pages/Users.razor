@@ -1,15 +1,17 @@
 ﻿@page "/users"
+@using Blazor_Test.Models
 @using Blazor_Test.Services
 @inject UserServices userServices
 
-<PageTitle>Counter</PageTitle>
+<PageTitle>User</PageTitle>
 
-<h1>Counter</h1>
-
-
-
-
-
+<h1>User</h1>
+@if (users == null)
+{
+    <p>Loading....</p>
+}
+else
+{
 <table class="table mt-3">
     <thead>
         <tr>
@@ -20,7 +22,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var user in userServices.GetAllUsers())
+        @foreach (var user in users)
         {
             <tr>
                 <td>
@@ -39,7 +41,16 @@
         }
     </tbody>
 </table>
+}
 
+@code{
+  User[]? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await userServices.GetAllUsers();
+    }
+}
 
 
 

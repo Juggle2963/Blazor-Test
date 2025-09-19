@@ -38,8 +38,6 @@ namespace Blazor_Test.Services
                 Console.WriteLine($"{u.FullName} | {u.UserName} | {u.Email} | {u.Password}");
             }
 
-
-
             Records.Clear();
 
             foreach (var u in users)

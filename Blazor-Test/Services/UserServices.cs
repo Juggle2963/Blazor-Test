@@ -13,10 +13,10 @@ namespace Blazor_Test.Services
         _context = context;
     }
 
-        public User[] GetAllUsers()
+        public async Task<User[]> GetAllUsers()
         {
-            return _context.Users
-                .ToArray();
+            return await _context.Users
+                .ToArrayAsync();
         }
 
         public async Task SaveUsersAsync(List<User> users)
